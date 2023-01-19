@@ -1,11 +1,15 @@
-FROM python:3
-ENV PYTHONUNBUFFERED=1
+FROM python:3.9-slim as builder
 WORKDIR /app
-COPY requirements.txt requirements.txt
-RUN pip install --root-user-action=ignore
-ENV PIP_ROOT_USER_ACTION=ignore
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY . .
-EXPOSE 5000
+FROM python:3.9-slim
+COPY --from=builder /opt/venv /opt/venv
+WORKDIR /app
+ENV PATH="/opt/venv/bin:$PATH"
 CMD [ "python3", "dolar.py", "repote.py","telegram.py", "--host=0.0.0.0", "--port=5000"]
-
